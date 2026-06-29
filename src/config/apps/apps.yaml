@@ -1,0 +1,8 @@
+# storage_lights:
+#   module: storage_lights
+#   class: StorageLightsAutomation
+
+living_room_led_strips:
+  module: living_room_led_strips
+  class: LivingRoomLedStripsAutomation
+

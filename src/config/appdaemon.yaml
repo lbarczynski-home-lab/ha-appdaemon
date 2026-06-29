@@ -1,0 +1,26 @@
+appdaemon:
+    latitude: !env_var LATITUDE
+    longitude: !env_var LONGITUDE
+    elevation: !env_var ELEVATION
+    time_zone: !env_var TZ
+    plugins:
+        HASS:
+            type: hass
+            ha_url: !env_var HASS_URL
+            token: !env_var HASS_TOKEN
+            cert_verify: True
+        MQTT:
+            type: mqtt
+            namespace: mqtt
+            client_host: !env_var MQTT_HOST
+            client_port: !env_var MQTT_PORT
+            client_transport: tcp
+            client_id: !env_var MQTT_CLIENT_ID
+            client_user: !env_var MQTT_USER
+            client_password: !env_var MQTT_PASSWORD
+http:
+    url: http://0.0.0.0:5050
+
+admin:
+api:
+hadashboard:

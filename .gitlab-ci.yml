@@ -1,0 +1,42 @@
+stages:
+  - .pre
+  - test
+  - deploy
+  - verify
+  - .post
+
+default:
+  before_script:
+    - |
+      if [ "$CI_JOB_STAGE" == "test" ]; then
+        echo "Test job detected. Overriding MQTT client_id in .env..."
+        sed -i 's/MQTT_CLIENT_ID=app_daemon/MQTT_CLIENT_ID=appdaemon_test/g' $BUILD_ARTIFACTS_DIR/.env
+      fi
+
+include:
+    - component: $CI_SERVER_FQDN/home-lab/automations/docker-compose-service-deployment@v2.0.3
+      inputs:
+          vm-hostname: ha.vm.xbhl.intranet
+          vm-ssh-username: $SSH_USER
+          vm-ssh-private-key: $SSH_PRIVATE_KEY
+          service-name: appdaemon
+          container-name: appdaemon
+          container-location: /opt/containers/appdaemon
+          cloudflare-dns-entry-name: appdaemon.ha.intranet.xbhl.online
+          cloudflare-zone-id: $CLOUDFLARE_ZONE_ID
+          cloudflare-dns-api-token: $CLOUDFLARE_DNS_API_TOKEN
+          delete-existing-container-files: true
+
+.preconfigure-run-script:
+    script:
+        - 'echo "🔵 Ensuring ha docker network exists..."'
+        - $CMD_PREFIX "sh -lc 'docker network inspect ha > /dev/null 2>&1 || docker network create -d bridge ha'"
+
+setup:generate-build-artifacts:
+    script:
+        - cp src/.env $BUILD_ARTIFACTS_DIR
+        - echo "HASS_URL=${HA_INTERNAL_URL}" >> $BUILD_ARTIFACTS_DIR/.env
+        - echo "HASS_TOKEN=${HA_API_TOKEN}" >> $BUILD_ARTIFACTS_DIR/.env
+        - echo "MQTT_HOST=${MQTT_HOSTNAME}" >> $BUILD_ARTIFACTS_DIR/.env
+        - echo "MQTT_USER=${MQTT_USERNAME}" >> $BUILD_ARTIFACTS_DIR/.env
+        - echo "MQTT_PASSWORD=${MQTT_PASSWORD}" >> $BUILD_ARTIFACTS_DIR/.env
