@@ -1,0 +1,52 @@
+services:
+    appdaemon:
+        container_name: appdaemon
+        image: acockburn/appdaemon:4.5.13
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+            - config:/conf
+        environment:
+            - TZ=${TZ:-Europe/Warsaw}
+            - LATITUDE=${LATITUDE:?err}
+            - LONGITUDE=${LONGITUDE:?err}
+            - ELEVATION=${ELEVATION:?err}
+            - HASS_URL=${HASS_URL:?err}
+            - HASS_TOKEN=${HASS_TOKEN:?err}
+            - MQTT_HOST=${MQTT_HOST:?err}
+            - MQTT_PORT=${MQTT_PORT:-1883}
+            - MQTT_USER=${MQTT_USER:?err}
+            - MQTT_PASSWORD=${MQTT_PASSWORD:?err}
+            - MQTT_CLIENT_ID=${MQTT_CLIENT_ID:-app_daemon}
+        ports:
+            - ${PUBLIC_PORT:?err}:${SERVICE_PORT:?err}
+        networks:
+            - ha
+            - proxy
+        healthcheck:
+            test: wget --quiet --spider http://127.0.0.1:${SERVICE_PORT:?err} || exit 1
+            start_period: 5s
+            timeout: 60s
+            interval: 5s
+            retries: 10
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.appdaemon-router.rule=Host(`${DOMAIN:?err}`)"
+            - "traefik.http.routers.appdaemon-router.entrypoints=websecure"
+            - "traefik.http.routers.appdaemon-router.tls=true"
+            - "traefik.http.routers.appdaemon-router.service=appdaemon"
+            - "traefik.http.services.appdaemon.loadbalancer.server.port=${SERVICE_PORT:?err}"
+        restart: unless-stopped
+
+volumes:
+    config:
+      driver: local
+      driver_opts:
+        type: none
+        o: bind
+        device: ./config
+
+networks:
+    ha:
+        external: true
+    proxy:
+        external: true
