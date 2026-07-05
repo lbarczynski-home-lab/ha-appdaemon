@@ -9,4 +9,4 @@
 ambient_lights_automation:
   module: ambient_lights
   class: AmbientLightsAutomation
-  
+
