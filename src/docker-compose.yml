@@ -35,6 +35,7 @@ services:
             - "traefik.http.routers.appdaemon-router.tls=true"
             - "traefik.http.routers.appdaemon-router.service=appdaemon"
             - "traefik.http.services.appdaemon.loadbalancer.server.port=${SERVICE_PORT:?err}"
+            - "traefik.docker.network=proxy"
         restart: unless-stopped
 
 volumes:
