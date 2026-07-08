@@ -3,10 +3,9 @@
 #   class: StorageLightsAutomation
 
 # living_room_led_strips:
-  # module: living_room_led_strips
-  # class: LivingRoomLedStripsAutomation
+# module: living_room_led_strips
+# class: LivingRoomLedStripsAutomation
 
 ambient_lights_automation:
   module: ambient_lights
   class: AmbientLightsAutomation
-
