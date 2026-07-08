@@ -25,3 +25,12 @@ admin:
 api:
 hadashboard:
 
+logs:
+    main_log:
+        filename: /conf/logs/appdaemon.log
+        log_size: 1000000
+        log_generations: 3
+    error_log:
+        filename: /conf/logs/error.log
+        log_size: 1000000
+        log_generations: 3

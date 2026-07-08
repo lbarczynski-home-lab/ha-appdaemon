@@ -7,7 +7,8 @@ services:
               target: /conf/appdaemon.yaml
         volumes:
             - /etc/localtime:/etc/localtime:ro
-            - apps_dir:/conf/apps:ro
+            - apps:/conf/apps:ro
+            - logs:/conf/logs
         environment:
             - TZ=${TZ:-Europe/Warsaw}
             - LATITUDE=${LATITUDE:?err}
@@ -46,12 +47,18 @@ configs:
         file: ./config/appdaemon.yaml
 
 volumes:
-    apps_dir:
+    apps:
         driver: local
         driver_opts:
             type: none
             o: bind
             device: ./apps
+    logs:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ./logs
 
 networks:
     ha:
