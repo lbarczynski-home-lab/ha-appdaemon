@@ -11,10 +11,12 @@ class AmbientLightsAutomation(hass.Hass):
     def initialize(self):
         self.mqtt = self.get_plugin_api("MQTT")
 
-        self.rtv_led_strip = self.get_entity(self.TV_RTV_LED_STRIP)
-        self.bookshelf_led_strip = self.get_entity(self.BOOKSHELF_LED_STRIP)
-        self.bedroom_rgb_lamp = self.get_entity(self.BEDROOM_RGB_LAMP)
-        self.office_floor_rgb_lamp = self.get_entity(self.OFFICE_FLOOR_RGB_LAMP)
+        self.ambient_lights = [
+            self.get_entity(self.TV_RTV_LED_STRIP),
+            self.get_entity(self.BOOKSHELF_LED_STRIP),
+            self.get_entity(self.BEDROOM_RGB_LAMP),
+            self.get_entity(self.OFFICE_FLOOR_RGB_LAMP),
+        ]
 
         self.buttons = [
             "zigbee2mqtt/hall_console_button",
@@ -47,15 +49,15 @@ class AmbientLightsAutomation(hass.Hass):
     def process_lights_logic(self):
         if self.are_lights_on():
             self.log("[AmbientLightsAutomation] Turning off all lights")
-            for light in self.ambient_ligts():
+            for light in self.ambient_lights:
                 light.turn_off()
         else:
             self.log("[AmbientLightsAutomation] Turning on all lights")
-            for light in self.ambient_ligts():
+            for light in self.ambient_lights:
                 light.turn_on(brightness=255)
 
     def are_lights_on(self):
-        for light in self.ambient_ligts():
+        for light in self.ambient_lights:
             if self.is_light_active(light):
                 return True
         return False
@@ -66,11 +68,3 @@ class AmbientLightsAutomation(hass.Hass):
 
         brightness = entity.get_state(attribute="brightness") or 0
         return brightness > 0
-
-    def ambient_ligts(self):
-        return [
-            self.rtv_led_strip,
-            self.bookshelf_led_strip,
-            self.bedroom_rgb_lamp,
-            self.office_floor_rgb_lamp,
-        ]

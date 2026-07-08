@@ -40,3 +40,15 @@ setup:generate-build-artifacts:
         - echo "MQTT_HOST=${MQTT_HOSTNAME}" >> $BUILD_ARTIFACTS_DIR/.env
         - echo "MQTT_USER=${MQTT_USERNAME}" >> $BUILD_ARTIFACTS_DIR/.env
         - echo "MQTT_PASSWORD=${MQTT_PASSWORD}" >> $BUILD_ARTIFACTS_DIR/.env
+
+test:appdaemon:unittests:
+  stage: test
+  image: python:3
+  script:
+    - ./scripts/run_tests.sh
+
+deploy:appdaemon:deploy-files:
+  needs:
+    - "setup:generate-build-artifacts"
+    - "test:appdaemon:docker-compose"
+    - "test:appdaemon:unittests"
