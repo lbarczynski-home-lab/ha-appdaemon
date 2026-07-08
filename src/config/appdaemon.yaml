@@ -28,9 +28,17 @@ hadashboard:
 logs:
     main_log:
         filename: /conf/logs/appdaemon.log
-        log_size: 1000000
+        log_size: 1000000 
         log_generations: 3
     error_log:
         filename: /conf/logs/error.log
+        log_size: 1000000
+        log_generations: 3
+    diag_log:
+        filename: /conf/logs/diag.log
+        log_size: 1000000
+        log_generations: 3
+    access_log:
+        filename: /conf/logs/access.log
         log_size: 1000000
         log_generations: 3
