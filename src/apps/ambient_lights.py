@@ -3,20 +3,8 @@ import json
 
 class AmbientLightsAutomation(hass.Hass):
 
-    BEDROOM_RGB_LAMP = "light.bedroom_rgb_lamp"
-    OFFICE_FLOOR_RGB_LAMP = "light.office_floor_rgb_lamp"
-    TV_RTV_LED_STRIP = "light.living_room_rtv_led_strip"
-    BOOKSHELF_LED_STRIP = "light.living_room_bookshelf_led_strip"
-
     def initialize(self):
         self.mqtt = self.get_plugin_api("MQTT")
-
-        self.ambient_lights = [
-            self.get_entity(self.TV_RTV_LED_STRIP),
-            self.get_entity(self.BOOKSHELF_LED_STRIP),
-            self.get_entity(self.BEDROOM_RGB_LAMP),
-            self.get_entity(self.OFFICE_FLOOR_RGB_LAMP),
-        ]
 
         self.buttons = [
             "zigbee2mqtt/hall_console_button",
@@ -49,22 +37,30 @@ class AmbientLightsAutomation(hass.Hass):
     def process_lights_logic(self):
         if self.are_lights_on():
             self.log("[AmbientLightsAutomation] Turning off all lights")
-            for light in self.ambient_lights:
+            for light in self.get_lights():
                 light.turn_off()
         else:
             self.log("[AmbientLightsAutomation] Turning on all lights")
-            for light in self.ambient_lights:
+            for light in self.get_lights():
                 light.turn_on(brightness=255)
 
     def are_lights_on(self):
-        for light in self.ambient_lights:
+        for light in self.get_lights():
             if self.is_light_active(light):
                 return True
         return False
 
     def is_light_active(self, entity) -> bool:
-        if entity.get_state().lower() != "on":
+        if str(entity.get_state()).lower() != "on":
             return False
 
         brightness = entity.get_state(attribute="brightness") or 0
         return brightness > 0
+
+    def get_lights(self):
+        return [
+            self.get_entity("light.living_room_rtv_led_strip"),
+            self.get_entity("light.living_room_bookshelf_led_strip"),
+            self.get_entity("light.bedroom_rgb_lamp"),
+            self.get_entity("light.office_floor_rgb_lamp"),
+        ]

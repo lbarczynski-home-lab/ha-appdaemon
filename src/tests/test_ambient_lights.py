@@ -25,7 +25,13 @@ def configured_app():
     app.log = MagicMock()
     
     mock_lights = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
-    app.get_entity = MagicMock(side_effect=mock_lights)
+    entity_map = {
+        "light.living_room_rtv_led_strip": mock_lights[0],
+        "light.living_room_bookshelf_led_strip": mock_lights[1],
+        "light.bedroom_rgb_lamp": mock_lights[2],
+        "light.office_floor_rgb_lamp": mock_lights[3],
+    }
+    app.get_entity = MagicMock(side_effect=lambda e: entity_map[e])
     
     app.initialize()
     
