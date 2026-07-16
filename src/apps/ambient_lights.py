@@ -1,66 +1,33 @@
 import hassapi as hass
-import json
+from components.lights import Zigbee2MqttLight, GoveeMqttLight
+from components.buttons import MqttButton
 
 class AmbientLightsAutomation(hass.Hass):
 
     def initialize(self):
         self.mqtt = self.get_plugin_api("MQTT")
-
-        self.buttons = [
-            "zigbee2mqtt/hall_console_button",
-            "zigbee2mqtt/bedroom_bedside_table_left_button",
-            "zigbee2mqtt/bedroom_bedside_table_right_button",
-            "zigbee2mqtt/hall_exit_button",
+        self.lights = [
+            Zigbee2MqttLight(self.log, self.mqtt, "RTV", "zigbee2mqtt/living_room_rtv_shelf_led_strip", "zigbee2mqtt/living_room_rtv_shelf_led_strip/set"),
+            Zigbee2MqttLight(self.log, self.mqtt, "Bookshelf", "zigbee2mqtt/living_room_bookshelf_led_strip", "zigbee2mqtt/living_room_bookshelf_led_strip/set"),
+            Zigbee2MqttLight(self.log, self.mqtt, "Bedroom Lamp", "zigbee2mqtt/bedroom_ambient_lamp", "zigbee2mqtt/bedroom_ambient_lamp/set"),
+            GoveeMqttLight(self.log, self.mqtt, "Office Lamp", "gv2mqtt/light/27D0EEE3EEDAD052/state", "gv2mqtt/light/27D0EEE3EEDAD052/command"),
         ]
-
-        for topic in set(self.buttons):
-            self.mqtt.listen_event(self.on_button_click, "MQTT_MESSAGE", topic=topic)
+        self.buttons = [
+            MqttButton(self.mqtt, "zigbee2mqtt/hall_console_button", self.on_button_click),
+            MqttButton(self.mqtt, "zigbee2mqtt/bedroom_bedside_table_left_button", self.on_button_click),
+            MqttButton(self.mqtt, "zigbee2mqtt/bedroom_bedside_table_right_button", self.on_button_click),
+            MqttButton(self.mqtt, "zigbee2mqtt/hall_exit_button", self.on_button_click),
+        ]
 
         self.log("[AmbientLightsAutomation] Initialized")
 
-    def on_button_click(self, event_name, data, kwargs):
-        payload = data.get("payload", "")
-
-        action = payload
-        if payload.startswith("{"):
-            try:
-                action = json.loads(payload).get("action", "")
-            except json.JSONDecodeError:
-                pass
-
-        if action == "single":
-            self.log(
-                f"[AmbientLightsAutomation] Single button click: {data.get('topic')}"
-            )
-            self.process_lights_logic()
-
-    def process_lights_logic(self):
-        if self.are_lights_on():
+    def on_button_click(self, topic):
+        self.log(f"[AmbientLightsAutomation] Single button click: {topic}")
+        if any(light.is_on() for light in self.lights):
             self.log("[AmbientLightsAutomation] Turning off all lights")
-            for light in self.get_lights():
+            for light in self.lights:
                 light.turn_off()
         else:
             self.log("[AmbientLightsAutomation] Turning on all lights")
-            for light in self.get_lights():
-                light.turn_on(brightness=255)
-
-    def are_lights_on(self):
-        for light in self.get_lights():
-            if self.is_light_active(light):
-                return True
-        return False
-
-    def is_light_active(self, entity) -> bool:
-        if str(entity.get_state()).lower() != "on":
-            return False
-
-        brightness = entity.get_state(attribute="brightness") or 0
-        return brightness > 0
-
-    def get_lights(self):
-        return [
-            self.get_entity("light.living_room_rtv_led_strip"),
-            self.get_entity("light.living_room_bookshelf_led_strip"),
-            self.get_entity("light.bedroom_rgb_lamp"),
-            self.get_entity("light.office_floor_rgb_lamp"),
-        ]
+            for light in self.lights:
+                light.turn_on()

@@ -1,6 +1,11 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 import sys
+import os
+import json
+
+# Add apps directory to sys.path so that absolute imports from within apps (like 'components') work
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../apps'))
 
 # Mock hassapi before importing the app
 class MockHass:
@@ -14,119 +19,101 @@ sys.modules["hassapi"] = mock_hassapi
 from apps.ambient_lights import AmbientLightsAutomation
 
 @pytest.fixture
-def configured_app():
-    """Fixture that initializes the app and mocks the lights."""
+def app():
+    """Fixture that initializes the app and mocks mqtt."""
     app = AmbientLightsAutomation()
     
     app.get_plugin_api = MagicMock()
     app.mqtt = MagicMock()
     app.get_plugin_api.return_value = app.mqtt
-    
     app.log = MagicMock()
-    
-    mock_lights = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
-    entity_map = {
-        "light.living_room_rtv_led_strip": mock_lights[0],
-        "light.living_room_bookshelf_led_strip": mock_lights[1],
-        "light.bedroom_rgb_lamp": mock_lights[2],
-        "light.office_floor_rgb_lamp": mock_lights[3],
-    }
-    app.get_entity = MagicMock(side_effect=lambda e: entity_map[e])
     
     app.initialize()
     
-    return app, mock_lights
+    # After initialize, app.lights and app.buttons are populated.
+    return app
 
-def setup_light_state(light_mock, is_on):
-    """Helper method to mock entity state responses for get_state()."""
-    if is_on:
-        def mock_get_state(attribute=None):
-            if attribute is None:
-                return "on"
-            elif attribute == "brightness":
-                return 100
-        light_mock.get_state.side_effect = mock_get_state
-    else:
-        def mock_get_state(attribute=None):
-            if attribute is None:
-                return "off"
-            elif attribute == "brightness":
-                return 0
-        light_mock.get_state.side_effect = mock_get_state
+def setup_light_state(app, is_on):
+    """Helper method to mock entity state responses by directly calling on_mqtt_message on each light."""
+    for light in app.lights:
+        payload = json.dumps({"state": "ON" if is_on else "OFF", "brightness": 100 if is_on else 0})
+        light.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
 
-def test_GIVEN_all_lights_off_WHEN_single_button_click_THEN_should_turn_on_all_lights(configured_app):
-    app, lights = configured_app
-    
+def test_GIVEN_all_lights_off_WHEN_single_button_click_THEN_should_turn_on_all_lights(app):
     # GIVEN
-    for light in lights:
-        setup_light_state(light, is_on=False)
+    setup_light_state(app, is_on=False)
+    app.mqtt.mqtt_publish.reset_mock()
         
     # WHEN
-    app.on_button_click("event_name", {"topic": "some/topic", "payload": "single"}, {})
+    button = app.buttons[0]
+    button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "single"}'}, {})
     
     # THEN
-    for light in lights:
-        light.turn_on.assert_called_once_with(brightness=255)
-        light.turn_off.assert_not_called()
+    # We expect mqtt_publish to be called with "ON" for all command topics
+    assert app.mqtt.mqtt_publish.call_count == 4
+    # Let's verify that "ON" is in the published payload
+    for call_args in app.mqtt.mqtt_publish.call_args_list:
+        topic, payload = call_args[0]
+        assert "ON" in payload
 
-def test_GIVEN_some_lights_on_WHEN_single_button_click_THEN_should_turn_off_all_lights(configured_app):
-    app, lights = configured_app
-    
+def test_GIVEN_some_lights_on_WHEN_single_button_click_THEN_should_turn_off_all_lights(app):
     # GIVEN
-    setup_light_state(lights[0], is_on=False)
-    setup_light_state(lights[1], is_on=True)
-    setup_light_state(lights[2], is_on=False)
-    setup_light_state(lights[3], is_on=False)
+    setup_light_state(app, is_on=False)
+    
+    # Turn ON just one light (e.g. the first one)
+    on_payload = json.dumps({"state": "ON", "brightness": 100})
+    app.lights[0].on_mqtt_message("MQTT_MESSAGE", {"payload": on_payload}, {})
+    
+    app.mqtt.mqtt_publish.reset_mock()
         
     # WHEN
-    app.on_button_click("event_name", {"topic": "some/topic", "payload": "single"}, {})
+    button = app.buttons[0]
+    button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "single"}'}, {})
     
     # THEN
-    for light in lights:
-        light.turn_off.assert_called_once()
-        light.turn_on.assert_not_called()
+    # We expect mqtt_publish to be called with "OFF" for all command topics
+    assert app.mqtt.mqtt_publish.call_count == 4
+    for call_args in app.mqtt.mqtt_publish.call_args_list:
+        topic, payload = call_args[0]
+        assert "OFF" in payload
 
-def test_GIVEN_all_lights_on_WHEN_single_button_click_THEN_should_turn_off_all_lights(configured_app):
-    app, lights = configured_app
-    
+def test_GIVEN_all_lights_on_WHEN_single_button_click_THEN_should_turn_off_all_lights(app):
     # GIVEN
-    for light in lights:
-        setup_light_state(light, is_on=True)
+    setup_light_state(app, is_on=True)
+    app.mqtt.mqtt_publish.reset_mock()
         
     # WHEN
-    app.on_button_click("event_name", {"topic": "some/topic", "payload": "single"}, {})
+    button = app.buttons[0]
+    button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "single"}'}, {})
     
     # THEN
-    for light in lights:
-        light.turn_off.assert_called_once()
-        light.turn_on.assert_not_called()
+    assert app.mqtt.mqtt_publish.call_count == 4
+    for call_args in app.mqtt.mqtt_publish.call_args_list:
+        topic, payload = call_args[0]
+        assert "OFF" in payload
 
-def test_GIVEN_all_lights_off_WHEN_unsupported_action_click_THEN_should_not_change_state(configured_app):
-    app, lights = configured_app
-    
+def test_GIVEN_all_lights_off_WHEN_unsupported_action_click_THEN_should_not_change_state(app):
     # GIVEN
-    for light in lights:
-        setup_light_state(light, is_on=False)
+    setup_light_state(app, is_on=False)
+    app.mqtt.mqtt_publish.reset_mock()
         
     # WHEN
-    app.on_button_click("event_name", {"topic": "some/topic", "payload": "double"}, {})
+    button = app.buttons[0]
+    button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "double"}'}, {})
     
     # THEN
-    for light in lights:
-        light.turn_off.assert_not_called()
-        light.turn_on.assert_not_called()
+    app.mqtt.mqtt_publish.assert_not_called()
 
-def test_GIVEN_all_lights_off_WHEN_single_button_click_json_payload_THEN_should_turn_on_all_lights(configured_app):
-    app, lights = configured_app
-    
-    # GIVEN
-    for light in lights:
-        setup_light_state(light, is_on=False)
+def test_GIVEN_no_initial_state_retained_WHEN_single_button_click_THEN_should_turn_on_all_lights(app):
+    # GIVEN no setup_light_state called (simulating no retained MQTT messages)
+    app.mqtt.mqtt_publish.reset_mock()
         
     # WHEN
-    app.on_button_click("event_name", {"topic": "some/topic", "payload": '{"action": "single"}'}, {})
+    button = app.buttons[0]
+    button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "single"}'}, {})
     
     # THEN
-    for light in lights:
-        light.turn_on.assert_called_once_with(brightness=255)
-        light.turn_off.assert_not_called()
+    assert app.mqtt.mqtt_publish.call_count == 4
+    for call_args in app.mqtt.mqtt_publish.call_args_list:
+        topic, payload = call_args[0]
+        assert "ON" in payload
