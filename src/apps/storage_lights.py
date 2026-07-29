@@ -1,13 +1,12 @@
-import mqttapi as mqtt
-from models.home import Home
+import hassapi as hass
 
-class StorageLightsAutomation(mqtt.Mqtt):
+class StorageLightsAutomation(hass.Hass):
 
     LOG_TAG = "[Storage lights automation]"
 
     def initialize(self):
         self.log(f"{self.LOG_TAG} Start")
-        self.home = Home(self.log, self)
+        self.home = self.get_app("home_model").home
         
         self.home.storage.doors.add_state_change_listener(self.on_doors_state_changed)
 

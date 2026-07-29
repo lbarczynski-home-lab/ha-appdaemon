@@ -6,6 +6,10 @@
 # module: living_room_led_strips
 # class: LivingRoomLedStripsAutomation
 
+home_model:
+  module: home_model_app
+  class: HomeModelApp
+
 ambient_lights_automation:
   module: ambient_lights
   class: AmbientLightsAutomation

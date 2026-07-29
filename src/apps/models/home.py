@@ -41,6 +41,8 @@ class Storage(Room):
 
 class Home:
     def __init__(self, log, mqtt):
+        self.log = log
+        self.mqtt = mqtt
         self.living_room = LivingRoom(log, mqtt)
         self.office = Office(log, mqtt)
         self.bedroom = Bedroom(log, mqtt)

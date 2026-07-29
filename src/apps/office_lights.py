@@ -1,13 +1,12 @@
-import mqttapi as mqtt
-from models.home import Home
+import hassapi as hass
 
-class OfficeLightsAutomation(mqtt.Mqtt):
+class OfficeLightsAutomation(hass.Hass):
 
     LOG_TAG = "[Office lights automation]"
 
     def initialize(self):
         self.log(f"{self.LOG_TAG} Start")
-        self.home = Home(self.log, self)
+        self.home = self.get_app("home_model").home
         
         self.home.office.light_switch_additional_button.add_state_change_listener(self.on_switch_state_changed)
 
