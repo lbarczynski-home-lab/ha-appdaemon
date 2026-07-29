@@ -112,3 +112,27 @@ class GoveeMqttLight(MqttLight):
             payload_dict["brightness"] = 100
             
         self.mqtt.mqtt_publish(self.command_topic, json.dumps(payload_dict))
+
+class HassLight:
+    def __init__(self, hass_app, entity_id):
+        self.app = hass_app
+        self.entity_id = entity_id
+        self.log = hass_app.log
+        self.log(f"[{self.__class__.__name__}] Initialized for entity {self.entity_id}", level="INFO")
+
+    def is_on(self) -> bool:
+        return self.app.get_state(self.entity_id) == "on"
+
+    def set_state(self, is_on: bool):
+        if is_on:
+            self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.entity_id}", level="INFO")
+            self.app.turn_on(self.entity_id)
+        else:
+            self.log(f"[{self.__class__.__name__}] Sending turn OFF command to {self.entity_id}", level="INFO")
+            self.app.turn_off(self.entity_id)
+
+    def turn_on(self):
+        self.set_state(True)
+
+    def turn_off(self):
+        self.set_state(False)
