@@ -22,7 +22,6 @@ def configured_app():
     
     app.mqtt_publish = MagicMock()
     app.listen_event = MagicMock()
-    app.mqtt_subscribe = MagicMock()
     app.log = MagicMock()
     
     app.initialize()

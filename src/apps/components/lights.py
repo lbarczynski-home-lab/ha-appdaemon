@@ -15,7 +15,6 @@ class MqttLight:
         self._expected_state_changes = 0
         self._listeners: list[StateChangeCallback] = []
         
-        self.mqtt.mqtt_subscribe(self.state_topic)
         self.mqtt.listen_event(self.on_mqtt_message, "MQTT_MESSAGE", topic=self.state_topic)
         self.log(f"[{self.__class__.__name__}] Initialized for topic {self.state_topic}", level="INFO")
 

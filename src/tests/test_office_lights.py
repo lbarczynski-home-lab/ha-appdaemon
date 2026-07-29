@@ -26,7 +26,6 @@ def app():
     # So we need to mock mqtt_publish, listen_event on app itself.
     app.mqtt_publish = MagicMock()
     app.listen_event = MagicMock()
-    app.mqtt_subscribe = MagicMock()
     
     app.initialize()
     return app
