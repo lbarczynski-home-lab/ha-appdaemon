@@ -20,39 +20,41 @@ from apps.models.home import Home
 @pytest.fixture
 def app():
     app = OfficeLightsAutomation()
-    app.get_app = MagicMock()
     app.log = MagicMock()
+    app.listen_state = MagicMock()
+    app.turn_on = MagicMock()
+    app.turn_off = MagicMock()
+    app.get_state = MagicMock()
     
     mock_home_app = MagicMock()
     mock_mqtt = MagicMock()
     mock_home_app.home = Home(MagicMock(), mock_mqtt)
     
-    app.get_app.return_value = mock_home_app
+    app.get_app = MagicMock(return_value=mock_home_app)
     app.initialize()
     return app
 
 def test_GIVEN_wall_button_turns_on_WHEN_state_changed_THEN_should_turn_on_vertical_rgb_lamp(app):
-    app.home.mqtt.mqtt_publish.reset_mock()
     payload = "ON"
     app.home.office.light_switch_additional_button.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
-    app.home.mqtt.mqtt_publish.assert_called_with("gv2mqtt/light/27D0EEE3EEDAD052/command", json.dumps({"state": "ON", "brightness": 100}))
+    app.turn_on.assert_called_with("light.office_floor_rgb_lamp", brightness=254)
 
 def test_GIVEN_wall_button_turns_off_WHEN_state_changed_THEN_should_turn_off_vertical_rgb_lamp(app):
     app.home.office.light_switch_additional_button.on_mqtt_message("MQTT_MESSAGE", {"payload": "ON"}, {})
-    app.home.mqtt.mqtt_publish.reset_mock()
+    app.turn_off.reset_mock()
+    
     payload = "OFF"
     app.home.office.light_switch_additional_button.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
-    app.home.mqtt.mqtt_publish.assert_called_with("gv2mqtt/light/27D0EEE3EEDAD052/command", json.dumps({"state": "OFF"}))
+    app.turn_off.assert_called_with("light.office_floor_rgb_lamp")
 
 def test_GIVEN_lamp_turns_on_WHEN_state_changed_THEN_should_turn_on_wall_button(app):
     app.home.mqtt.mqtt_publish.reset_mock()
-    payload = json.dumps({"state": "ON", "brightness": 100})
-    app.home.office.vertical_rgb_lamp.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
+    app.lamp._on_hass_state_change("light.office_floor_rgb_lamp", "state", "off", "on", {})
     app.home.mqtt.mqtt_publish.assert_called_with("iot/tasmota/office_light/cmnd/POWER2", "ON")
 
 def test_GIVEN_lamp_turns_off_WHEN_state_changed_THEN_should_turn_off_wall_button(app):
-    app.home.office.vertical_rgb_lamp.on_mqtt_message("MQTT_MESSAGE", {"payload": json.dumps({"state": "ON", "brightness": 100})}, {})
+    app.lamp._on_hass_state_change("light.office_floor_rgb_lamp", "state", "off", "on", {})
     app.home.mqtt.mqtt_publish.reset_mock()
-    payload = json.dumps({"state": "OFF"})
-    app.home.office.vertical_rgb_lamp.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
+    
+    app.lamp._on_hass_state_change("light.office_floor_rgb_lamp", "state", "on", "off", {})
     app.home.mqtt.mqtt_publish.assert_called_with("iot/tasmota/office_light/cmnd/POWER2", "OFF")

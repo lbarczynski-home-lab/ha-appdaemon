@@ -23,6 +23,7 @@ def app():
     app.get_state = MagicMock()
     app.turn_on = MagicMock()
     app.turn_off = MagicMock()
+    app.listen_state = MagicMock()
     
     # Mock Home model
     mock_home_app = MagicMock()
@@ -42,15 +43,15 @@ def test_GIVEN_all_lights_off_WHEN_button_click_THEN_should_turn_on_all_lights(a
     
     assert app.turn_on.call_count == 4
     app.turn_on.assert_has_calls([
-        call("light.living_room_rtv_shelf_led_strip"),
-        call("light.living_room_bookshelf_led_strip"),
-        call("light.bedroom_ambient_lamp"),
-        call("light.office_vertical_rgb_lamp"),
+        call("light.living_room_rtv_led_strip", brightness=254),
+        call("light.living_room_bookshelf_led_strip", brightness=254),
+        call("light.bedroom_rgb_lamp", brightness=254),
+        call("light.office_floor_rgb_lamp", brightness=254),
     ])
 
 def test_GIVEN_some_lights_on_WHEN_button_click_THEN_should_turn_off_active_lights(app):
     def mock_get_state(entity_id):
-        if entity_id == "light.living_room_rtv_shelf_led_strip":
+        if entity_id == "light.living_room_rtv_led_strip":
             return "on"
         return "off"
         
@@ -59,4 +60,4 @@ def test_GIVEN_some_lights_on_WHEN_button_click_THEN_should_turn_off_active_ligh
     app.home.bedroom.bedside_table_left_button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "single"}'}, {})
     
     assert app.turn_off.call_count == 1
-    app.turn_off.assert_called_with("light.living_room_rtv_shelf_led_strip")
+    app.turn_off.assert_called_with("light.living_room_rtv_led_strip")

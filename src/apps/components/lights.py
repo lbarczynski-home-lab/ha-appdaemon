@@ -118,21 +118,37 @@ class HassLight:
         self.app = hass_app
         self.entity_id = entity_id
         self.log = hass_app.log
+        self._listeners = []
         self.log(f"[{self.__class__.__name__}] Initialized for entity {self.entity_id}", level="INFO")
+        
+        self.app.listen_state(self._on_hass_state_change, self.entity_id)
+
+    def _on_hass_state_change(self, entity, attribute, old, new, kwargs):
+        is_on = (new == "on")
+        self.log(f"[{self.__class__.__name__}] State changed to {new} for {self.entity_id}", level="INFO")
+        for callback in self._listeners:
+            callback(self.entity_id, is_on)
+
+    def add_state_change_listener(self, callback) -> None:
+        self._listeners.append(callback)
+
+    def remove_state_change_listener(self, callback) -> None:
+        if callback in self._listeners:
+            self._listeners.remove(callback)
 
     def is_on(self) -> bool:
         return self.app.get_state(self.entity_id) == "on"
 
-    def set_state(self, is_on: bool):
+    def set_state(self, is_on: bool, brightness: int = 254):
         if is_on:
-            self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.entity_id}", level="INFO")
-            self.app.turn_on(self.entity_id)
+            self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.entity_id} with brightness {brightness}", level="INFO")
+            self.app.turn_on(self.entity_id, brightness=brightness)
         else:
             self.log(f"[{self.__class__.__name__}] Sending turn OFF command to {self.entity_id}", level="INFO")
             self.app.turn_off(self.entity_id)
 
-    def turn_on(self):
-        self.set_state(True)
+    def turn_on(self, brightness: int = 254):
+        self.set_state(True, brightness=brightness)
 
     def turn_off(self):
         self.set_state(False)
