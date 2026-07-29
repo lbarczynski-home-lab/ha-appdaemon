@@ -42,6 +42,12 @@ class MqttLight:
     def turn_off(self):
         self.set_state(False)
 
+    def toggle(self):
+        if self.is_on():
+            self.turn_off()
+        else:
+            self.turn_on()
+
     def set_state(self, is_on: bool):
         raise NotImplementedError()
 
@@ -152,3 +158,9 @@ class HassLight:
 
     def turn_off(self):
         self.set_state(False)
+
+    def toggle(self, brightness: int = 254):
+        if self.is_on():
+            self.turn_off()
+        else:
+            self.turn_on(brightness=brightness)

@@ -57,7 +57,7 @@ def test_GIVEN_some_lights_on_WHEN_button_click_THEN_should_turn_off_active_ligh
         
     app.get_state.side_effect = mock_get_state
     
-    app.home.bedroom.bedside_table_left_button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "single"}'}, {})
+    app.home.hall.exit_button.on_mqtt_message("MQTT_MESSAGE", {"payload": '{"action": "single"}'}, {})
     
     assert app.turn_off.call_count == 1
     app.turn_off.assert_called_with("light.living_room_rtv_led_strip")

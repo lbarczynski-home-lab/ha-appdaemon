@@ -1,6 +1,6 @@
 from components.lights import Zigbee2MqttLight, GoveeMqttLight
 from components.buttons import MqttButton
-from components.switch import TasmotaSwitch
+from components.switch import TasmotaSwitch, ShellySwitch
 from components.sensors import MqttContactSensor
 
 class Room:
@@ -77,6 +77,13 @@ class Hall(Room):
             log=log, 
             mqtt_plugin=mqtt, 
             topic="zigbee2mqtt/hall_exit_button"
+        )
+        self.main_light = ShellySwitch(
+            app_logger=log,
+            mqtt_plugin=mqtt,
+            name="Hall Main Light",
+            state_topic="shellies/hall_main_light/relay/0",
+            command_topic="shellies/hall_main_light/relay/0/command"
         )
 
 class Storage(Room):

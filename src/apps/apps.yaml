@@ -10,10 +10,14 @@ home_model:
   module: home_model_app
   class: HomeModelApp
 
-ambient_lights_automation:
-  module: ambient_lights
-  class: AmbientLightsAutomation
+# ambient_lights_automation:
+#   module: ambient_lights
+#   class: AmbientLightsAutomation
 
 office_lights_automation:
   module: office_lights
   class: OfficeLightsAutomation
+
+bedroom_lights_automation:
+  module: bedroom_lights
+  class: BedroomLightsAutomation
