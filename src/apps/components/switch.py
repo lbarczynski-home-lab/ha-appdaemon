@@ -35,9 +35,12 @@ class MqttSwitch:
         return self._is_on
 
     def turn_on(self):
-        raise NotImplementedError()
+        self.set_state(True)
 
     def turn_off(self):
+        self.set_state(False)
+
+    def set_state(self, is_on: bool):
         raise NotImplementedError()
 
 class TasmotaSwitch(MqttSwitch):
@@ -55,12 +58,8 @@ class TasmotaSwitch(MqttSwitch):
         elif state_changed:
             self._notify_state_change()
     
-    def turn_on(self):
-        self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.command_topic}", level="INFO")
+    def set_state(self, is_on: bool):
+        state_str = self.TURN_ON_PAYLOAD if is_on else self.TURN_OFF_PAYLOAD
+        self.log(f"[{self.__class__.__name__}] Sending turn {state_str} command to {self.command_topic}", level="INFO")
         self._expected_state_changes += 1
-        self.mqtt.mqtt_publish(self.command_topic, self.TURN_ON_PAYLOAD)
-
-    def turn_off(self):
-        self.log(f"[{self.__class__.__name__}] Sending turn OFF command to {self.command_topic}", level="INFO")
-        self._expected_state_changes += 1
-        self.mqtt.mqtt_publish(self.command_topic, self.TURN_OFF_PAYLOAD)
+        self.mqtt.mqtt_publish(self.command_topic, state_str)

@@ -37,9 +37,12 @@ class MqttLight:
         return self._is_on and self._brightness > 0
 
     def turn_on(self):
-        raise NotImplementedError()
+        self.set_state(True)
 
     def turn_off(self):
+        self.set_state(False)
+
+    def set_state(self, is_on: bool):
         raise NotImplementedError()
 
 
@@ -65,17 +68,16 @@ class Zigbee2MqttLight(MqttLight):
         except json.JSONDecodeError:
             pass
 
-    def turn_on(self):
-        self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.command_topic}", level="INFO")
+    def set_state(self, is_on: bool):
+        state_str = "ON" if is_on else "OFF"
+        self.log(f"[{self.__class__.__name__}] Sending turn {state_str} command to {self.command_topic}", level="INFO")
         self._expected_state_changes += 1
-        payload = json.dumps({"state": "ON", "brightness": 254})
-        self.mqtt.mqtt_publish(self.command_topic, payload)
-
-    def turn_off(self):
-        self.log(f"[{self.__class__.__name__}] Sending turn OFF command to {self.command_topic}", level="INFO")
-        self._expected_state_changes += 1
-        payload = json.dumps({"state": "OFF"})
-        self.mqtt.mqtt_publish(self.command_topic, payload)
+        
+        payload_dict = {"state": state_str}
+        if is_on:
+            payload_dict["brightness"] = 254
+            
+        self.mqtt.mqtt_publish(self.command_topic, json.dumps(payload_dict))
 
 
 class GoveeMqttLight(MqttLight):
@@ -100,14 +102,13 @@ class GoveeMqttLight(MqttLight):
         except json.JSONDecodeError:
             pass
 
-    def turn_on(self):
-        self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.command_topic}", level="INFO")
+    def set_state(self, is_on: bool):
+        state_str = "ON" if is_on else "OFF"
+        self.log(f"[{self.__class__.__name__}] Sending turn {state_str} command to {self.command_topic}", level="INFO")
         self._expected_state_changes += 1
-        payload = json.dumps({"state": "ON", "brightness": 100})
-        self.mqtt.mqtt_publish(self.command_topic, payload)
-
-    def turn_off(self):
-        self.log(f"[{self.__class__.__name__}] Sending turn OFF command to {self.command_topic}", level="INFO")
-        self._expected_state_changes += 1
-        payload = json.dumps({"state": "OFF"})
-        self.mqtt.mqtt_publish(self.command_topic, payload)
+        
+        payload_dict = {"state": state_str}
+        if is_on:
+            payload_dict["brightness"] = 100
+            
+        self.mqtt.mqtt_publish(self.command_topic, json.dumps(payload_dict))

@@ -43,3 +43,16 @@ def test_GIVEN_wall_button_turns_off_WHEN_state_changed_THEN_should_turn_off_ver
     payload = "OFF"
     app.home.office.light_switch_additional_button.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
     app.home.mqtt.mqtt_publish.assert_called_with("gv2mqtt/light/27D0EEE3EEDAD052/command", json.dumps({"state": "OFF"}))
+
+def test_GIVEN_lamp_turns_on_WHEN_state_changed_THEN_should_turn_on_wall_button(app):
+    app.home.mqtt.mqtt_publish.reset_mock()
+    payload = json.dumps({"state": "ON", "brightness": 100})
+    app.home.office.vertical_rgb_lamp.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
+    app.home.mqtt.mqtt_publish.assert_called_with("iot/tasmota/office_light/cmnd/POWER2", "ON")
+
+def test_GIVEN_lamp_turns_off_WHEN_state_changed_THEN_should_turn_off_wall_button(app):
+    app.home.office.vertical_rgb_lamp.on_mqtt_message("MQTT_MESSAGE", {"payload": json.dumps({"state": "ON", "brightness": 100})}, {})
+    app.home.mqtt.mqtt_publish.reset_mock()
+    payload = json.dumps({"state": "OFF"})
+    app.home.office.vertical_rgb_lamp.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
+    app.home.mqtt.mqtt_publish.assert_called_with("iot/tasmota/office_light/cmnd/POWER2", "OFF")
