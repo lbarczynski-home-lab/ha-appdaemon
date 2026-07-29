@@ -1,15 +1,28 @@
 import json
 from contextlib import suppress
+from typing import Callable, List
+
+ButtonClickListener = Callable[[str], None]
 
 class MqttButton:
-    def __init__(self, mqtt_plugin, topic, on_single_click):
+    def __init__(self, log, mqtt_plugin, topic):
+        self.log = log
         self.mqtt = mqtt_plugin
         self.topic = topic
-        self.on_single_click = on_single_click
-        
+        self._listeners: List[ButtonClickListener] = []
         self.mqtt.listen_event(self.on_mqtt_message, "MQTT_MESSAGE", topic=self.topic)
+        self.log(f"[{self.__class__.__name__}] Initialized for topic {self.topic}", level="INFO")
+
+    def add_click_listener(self, listener: ButtonClickListener):
+        self._listeners.append(listener)
+
+    def remove_click_listener(self, listener: ButtonClickListener):
+        if listener in self._listeners:
+            self._listeners.remove(listener)
 
     def on_mqtt_message(self, event_name, data, kwargs):
         with suppress(json.JSONDecodeError, AttributeError):
             if json.loads(data.get("payload", "")).get("action") == "single":
-                self.on_single_click(self.topic)
+                self.log(f"[MqttButton] Click detected on {self.topic}", level="INFO")
+                for listener in self._listeners:
+                    listener(self.topic)

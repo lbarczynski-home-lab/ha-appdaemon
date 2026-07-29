@@ -1,23 +1,23 @@
 import hassapi as hass
-from components.lights import Zigbee2MqttLight, GoveeMqttLight
-from components.buttons import MqttButton
+from models.home import Home
 
 class AmbientLightsAutomation(hass.Hass):
 
     def initialize(self):
         self.mqtt = self.get_plugin_api("MQTT")
+        self.home = Home(self.log, self.mqtt)
+        
         self.lights = [
-            Zigbee2MqttLight(self.log, self.mqtt, "RTV", "zigbee2mqtt/living_room_rtv_shelf_led_strip", "zigbee2mqtt/living_room_rtv_shelf_led_strip/set"),
-            Zigbee2MqttLight(self.log, self.mqtt, "Bookshelf", "zigbee2mqtt/living_room_bookshelf_led_strip", "zigbee2mqtt/living_room_bookshelf_led_strip/set"),
-            Zigbee2MqttLight(self.log, self.mqtt, "Bedroom Lamp", "zigbee2mqtt/bedroom_ambient_lamp", "zigbee2mqtt/bedroom_ambient_lamp/set"),
-            GoveeMqttLight(self.log, self.mqtt, "Office Lamp", "gv2mqtt/light/27D0EEE3EEDAD052/state", "gv2mqtt/light/27D0EEE3EEDAD052/command"),
+            self.home.living_room.rtv_led_strip,
+            self.home.living_room.bookshelf_led_strip,
+            self.home.bedroom.lamp,
+            self.home.office.vertical_rgb_lamp,
         ]
-        self.buttons = [
-            MqttButton(self.mqtt, "zigbee2mqtt/hall_console_button", self.on_button_click),
-            MqttButton(self.mqtt, "zigbee2mqtt/bedroom_bedside_table_left_button", self.on_button_click),
-            MqttButton(self.mqtt, "zigbee2mqtt/bedroom_bedside_table_right_button", self.on_button_click),
-            MqttButton(self.mqtt, "zigbee2mqtt/hall_exit_button", self.on_button_click),
-        ]
+        
+        self.home.hall.console_button.add_click_listener(self.on_button_click)
+        self.home.bedroom.bedside_table_left_button.add_click_listener(self.on_button_click)
+        self.home.bedroom.bedside_table_right_button.add_click_listener(self.on_button_click)
+        self.home.hall.exit_button.add_click_listener(self.on_button_click)
 
         self.log("[AmbientLightsAutomation] Initialized")
 
