@@ -37,7 +37,7 @@ def app():
 def test_GIVEN_wall_button_turns_on_WHEN_state_changed_THEN_should_turn_on_vertical_rgb_lamp(app):
     payload = "ON"
     app.home.office.light_switch_additional_button.on_mqtt_message("MQTT_MESSAGE", {"payload": payload}, {})
-    app.turn_on.assert_called_with("light.office_floor_rgb_lamp", brightness=254)
+    app.turn_on.assert_called_with("light.office_floor_rgb_lamp")
 
 def test_GIVEN_wall_button_turns_off_WHEN_state_changed_THEN_should_turn_off_vertical_rgb_lamp(app):
     app.home.office.light_switch_additional_button.on_mqtt_message("MQTT_MESSAGE", {"payload": "ON"}, {})

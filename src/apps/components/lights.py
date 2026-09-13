@@ -1,5 +1,5 @@
 import json
-from typing import Callable
+from typing import Callable, Optional
 
 StateChangeCallback = Callable[[str, bool], None]
 
@@ -145,21 +145,25 @@ class HassLight:
     def is_on(self) -> bool:
         return self.app.get_state(self.entity_id) == "on"
 
-    def set_state(self, is_on: bool, brightness: int = 254):
+    def set_state(self, is_on: bool, brightness: Optional[int] = None):
         if is_on:
-            self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.entity_id} with brightness {brightness}", level="INFO")
-            self.app.turn_on(self.entity_id, brightness=brightness)
+            if brightness is not None:
+                self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.entity_id} with brightness {brightness}", level="INFO")
+                self.app.turn_on(self.entity_id, brightness=brightness)
+            else:
+                self.log(f"[{self.__class__.__name__}] Sending turn ON command to {self.entity_id}", level="INFO")
+                self.app.turn_on(self.entity_id)
         else:
             self.log(f"[{self.__class__.__name__}] Sending turn OFF command to {self.entity_id}", level="INFO")
             self.app.turn_off(self.entity_id)
 
-    def turn_on(self, brightness: int = 254):
+    def turn_on(self, brightness: Optional[int] = None):
         self.set_state(True, brightness=brightness)
 
     def turn_off(self):
         self.set_state(False)
 
-    def toggle(self, brightness: int = 254):
+    def toggle(self, brightness: Optional[int] = None):
         if self.is_on():
             self.turn_off()
         else:

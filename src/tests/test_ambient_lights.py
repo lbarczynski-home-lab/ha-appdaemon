@@ -43,10 +43,10 @@ def test_GIVEN_all_lights_off_WHEN_button_click_THEN_should_turn_on_all_lights(a
     
     assert app.turn_on.call_count == 4
     app.turn_on.assert_has_calls([
-        call("light.living_room_rtv_led_strip", brightness=254),
-        call("light.living_room_bookshelf_led_strip", brightness=254),
-        call("light.bedroom_rgb_lamp", brightness=254),
-        call("light.office_floor_rgb_lamp", brightness=254),
+        call("light.living_room_rtv_led_strip"),
+        call("light.living_room_bookshelf_led_strip"),
+        call("light.bedroom_rgb_lamp"),
+        call("light.office_floor_rgb_lamp"),
     ])
 
 def test_GIVEN_some_lights_on_WHEN_button_click_THEN_should_turn_off_active_lights(app):

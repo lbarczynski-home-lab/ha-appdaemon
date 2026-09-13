@@ -38,11 +38,18 @@ def test_GIVEN_hass_light_WHEN_is_on_called_THEN_returns_false_if_state_is_off(m
     mock_app.get_state.return_value = "off"
     assert light.is_on() is False
 
-def test_GIVEN_hass_light_WHEN_turn_on_called_THEN_should_call_app_turn_on_with_default_brightness(mock_app):
+def test_GIVEN_hass_light_WHEN_turn_on_called_without_brightness_THEN_should_call_app_turn_on_without_brightness(mock_app):
     light = HassLight(mock_app, "light.test_lamp")
     light.turn_on()
-    mock_app.turn_on.assert_called_with("light.test_lamp", brightness=254)
-    mock_app.log.assert_any_call("[HassLight] Sending turn ON command to light.test_lamp with brightness 254", level="INFO")
+    mock_app.turn_on.assert_called_with("light.test_lamp")
+    mock_app.log.assert_any_call("[HassLight] Sending turn ON command to light.test_lamp", level="INFO")
+
+def test_GIVEN_hass_light_WHEN_toggle_called_without_brightness_and_is_off_THEN_should_turn_on_without_brightness(mock_app):
+    light = HassLight(mock_app, "light.test_lamp")
+    mock_app.get_state.return_value = "off"
+    light.toggle()
+    mock_app.turn_on.assert_called_with("light.test_lamp")
+    mock_app.log.assert_any_call("[HassLight] Sending turn ON command to light.test_lamp", level="INFO")
 
 def test_GIVEN_hass_light_WHEN_turn_on_called_with_brightness_THEN_should_call_app_turn_on_with_custom_brightness(mock_app):
     light = HassLight(mock_app, "light.test_lamp")
