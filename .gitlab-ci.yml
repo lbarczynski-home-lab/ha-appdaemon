@@ -14,7 +14,7 @@ default:
       fi
 
 include:
-    - component: $CI_SERVER_FQDN/home-lab/automations/docker-compose-service-deployment@v2.0.3
+    - component: $CI_SERVER_FQDN/home-lab/automations/docker-compose-service-deployment@v2.1.0
       inputs:
           vm-hostname: ha.vm.xbhl.intranet
           vm-ssh-username: $SSH_USER
