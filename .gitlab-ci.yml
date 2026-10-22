@@ -29,8 +29,10 @@ include:
 
 .preconfigure-run-script:
     script:
-        - 'echo "🔵 Ensuring ha docker network exists..."'
-        - $CMD_PREFIX "sh -lc 'docker network inspect ha > /dev/null 2>&1 || docker network create -d bridge ha'"
+        - !reference [.base:core:exec, script]
+        - log_info "Ensuring ha docker network exists..."
+        - |
+            run_cmd "docker network inspect ha > /dev/null 2>&1 || docker network create -d bridge ha"
 
 setup:generate-build-artifacts:
     script:
