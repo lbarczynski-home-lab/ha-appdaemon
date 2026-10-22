@@ -29,10 +29,10 @@ include:
 
 .preconfigure-run-script:
     script:
-        - !reference [.base:core:exec, script]
-        - log_info "Ensuring ha docker network exists..."
-        - |
-            run_cmd "docker network inspect ha > /dev/null 2>&1 || docker network create -d bridge ha"
+        - export NETWORK_NAME="ha"
+        - export NETWORK_DRIVER="bridge"
+        - !reference [.base:docker:network:ensure, script]
+        - export NETWORK_NAME="proxy"
 
 setup:generate-build-artifacts:
     script:
